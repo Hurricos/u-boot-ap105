@@ -27,7 +27,7 @@
 #define CONFIG_BOOTDELAY  3
 
 #undef CONFIG_BAUDRATE
-#define CONFIG_BAUDRATE		9600
+#define CONFIG_BAUDRATE		115200
 
 /*-----------------------------------------------------------------------
  * FLASH and environment organization
