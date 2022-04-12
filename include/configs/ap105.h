@@ -185,6 +185,7 @@
 #define CFG_GMII 0
 #define CFG_MII0_RGMII 0
 #define CFG_AG7100_GE0_RGMII 1
+#define CFG_AG7100_GE1_RGMII 1
 
 /*
 ** Configure Parser
