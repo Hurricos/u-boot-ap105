@@ -41,7 +41,7 @@ athr_phy_t phy_info[] = {
 #elif defined CFG_BOARD_AP105
     {is_enet_port: 1,
      mac_unit    : 0,
-     phy_addr    : 0x00}
+     phy_addr    : 0x01}
 #else
     {is_enet_port: 1,
      mac_unit    : 0,
