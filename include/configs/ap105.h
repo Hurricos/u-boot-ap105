@@ -123,6 +123,7 @@
 #define CONFIG_NR_DRAM_BANKS    		2
 
 /* #define CFG_BOARD_AP96 1 */
+#define CFG_BOARD_AP105 1
 
 /*
 ** Parameters defining the location of the calibration/initialization
