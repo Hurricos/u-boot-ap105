@@ -172,8 +172,8 @@
 ** Set default values, and select the PHY to use
 */
 
-#define CONFIG_IPADDR       		192.168.1.2
-#define CONFIG_SERVERIP     		192.168.1.101
+#define CONFIG_IPADDR       		10.0.7.7
+#define CONFIG_SERVERIP     		10.0.7.1
 //#define CONFIG_ETHADDR      		00:03:7f:ff:ff:fe
 #define CFG_FAULT_ECHO_LINK_DOWN    1
 #define CONFIG_PHY_GIGE       		1              /* GbE speed/duplex detect */
