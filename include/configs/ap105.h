@@ -179,7 +179,7 @@
 #define CONFIG_PHY_GIGE       		1              /* GbE speed/duplex detect */
 
 #define CFG_ATHRF1_PHY				1
-#define CFG_AG7100_NMACS 			1
+#define CFG_AG7100_NMACS 			2
 
 #define CFG_PHY_ADDR				0  /* Port 0 */
 #define CFG_GMII 0
@@ -192,7 +192,7 @@
 */
 
 #define CFG_BOOTM_LEN   (16 << 20) /* 16 MB */
-/* #define DEBUG */
+#define DEBUG 1
 #define CFG_HUSH_PARSER
 #define CFG_PROMPT_HUSH_PS2 "hush>"
 
