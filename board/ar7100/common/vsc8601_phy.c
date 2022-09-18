@@ -58,7 +58,7 @@
 #endif
 
 #ifndef VERBOSE
-#define  VERBOSE           1
+#define  VERBOSE           10
 #endif
 
 #include "vsc8601_phy.h"
@@ -1022,6 +1022,17 @@ vsc8601_phy_discover_and_setup_phy(int unit)
           unit_cnt++;
           break;
 	  
+          /* cover all revisions of ICPlus IP1001 PHY */
+          case 0x02430d90: case 0x02430d91: case 0x02430d92: case 0x02430d93:
+          case 0x02430d94: case 0x02430d95: case 0x02430d96: case 0x02430d97:
+          case 0x02430d98: case 0x02430d99: case 0x02430d9a: case 0x02430d9b:
+          case 0x02430d9c: case 0x02430d9d: case 0x02430d9e: case 0x02430d9f:
+          generic_printk(" PHY is ICPlus Gigabit PHY\n");
+          vsc8601_phy_setup_generic(unit, phy_addr);
+          phy_info[nmbr_phys].is_enet_port=1;
+          unit_cnt++;
+          break;
+
 	default:
 	  generic_printk(" PHY is unknown, using generic IEEE interface\n");
 	  vsc8601_phy_setup_generic(unit, phy_addr);

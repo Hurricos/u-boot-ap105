@@ -36,6 +36,8 @@ int ag7100_miiphy_read(char *devname, unsigned char phaddr,
 int ag7100_miiphy_write(char *devname, unsigned char phaddr,
 	        unsigned char reg, unsigned short data);
 
+static int ag7100_check_link(ag7100_mac_t *mac);
+
 ag7100_mac_t *ag7100_macs[CFG_AG7100_NMACS];
 #if 0
 void pkt_dump(char *data,int pkt_size) {
@@ -51,6 +53,7 @@ void pkt_dump(char *data,int pkt_size) {
     printf("***********end***************\n");
 }
 #endif
+void
 pkt_push(uint8_t *pkt,int length)
 {
    uint8_t *buf;
@@ -71,6 +74,10 @@ ag7100_send(struct eth_device *dev, volatile void *packet, int length)
 {
     int i;
     ag7100_mac_t *mac = (ag7100_mac_t *)dev->priv;
+
+    if (!mac->link) {
+    	ag7100_check_link(mac);
+    }
 
     ag7100_desc_t *f = mac->fifo_tx[mac->next_tx];
 
@@ -128,9 +135,11 @@ static int ag7100_recv(struct eth_device *dev)
     mac = (ag7100_mac_t *)dev->priv;
 
     for (;;) {
+	ar7100_flush_ge(mac->mac_unit);	// SCA; added this after looking at Linux
         f = mac->fifo_rx[mac->next_rx];
-        if (ag7100_rx_owned_by_dma(f))
+        if (ag7100_rx_owned_by_dma(f)) {
             break;
+	}
 
         length = f->pkt_size;
 
@@ -151,7 +160,8 @@ static int ag7100_recv(struct eth_device *dev)
     return (0);
 }
 
-#if defined(CFG_ATHRS16_PHY) || defined(CFG_ATHRF1_PHY)
+#if defined(CFG_ATHRS16_PHY) || defined(CFG_ATHRF1_PHY) || defined(CFG_BOARD_AP105)
+
 /*
  * program the usb pll (misnomer) to genrate appropriate clock
  * Write 2 into control field
@@ -196,7 +206,10 @@ ag7100_set_pll(ag7100_mac_t *mac, unsigned int pll)
 
 static void ag7100_hw_start(ag7100_mac_t *mac)
 {
-    u32 mii_ctrl_val, isXGMII = CFG_GMII;
+    u32 mii_ctrl_val;
+#if !defined(CONFIG_PB44) && !defined(CONFIG_TALISKER) && !defined(CONFIG_JURA_R) && !defined(CONFIG_MSR2K)
+    u32 isXGMII = CFG_GMII;
+#endif
 
 #ifdef CFG_MII0_RGMII
     mii_ctrl_val = 0x12; /* this value seems to be incorrect - JK */
@@ -216,11 +229,13 @@ static void ag7100_hw_start(ag7100_mac_t *mac)
     ag7100_reg_rmw_set(mac, AG7100_MAC_CFG2, (AG7100_MAC_CFG2_PAD_CRC_EN |
 		         AG7100_MAC_CFG2_LEN_CHECK));
 
+#if !defined(CONFIG_PB44) && !defined(CONFIG_TALISKER) && !defined(CONFIG_JURA_R) && !defined(CONFIG_MSR2K)
     ag7100_set_mac_if(mac, isXGMII);
+#endif
 
     ag7100_reg_wr(mac, AG7100_MAC_FIFO_CFG_0, 0x1f00);
 
-#if !defined(CFG_BOARD_PB45) && !defined(CFG_BOARD_AP96) && !defined(CFG_BOARD_PB42)
+#if !defined(CFG_BOARD_PB45) && !defined(CFG_BOARD_AP96)
     if(mac->mac_unit == 0) {
         ar7100_reg_wr(AR7100_MII0_CTRL, mii_ctrl_val);
     } else {
@@ -236,12 +251,14 @@ static void ag7100_hw_start(ag7100_mac_t *mac)
     ag7100_reg_wr(mac, AG7100_MAC_MII_MGMT_CFG, AG7100_MGMT_CFG_CLK_DIV_20);
 
     ag7100_reg_rmw_set(mac, AG7100_MAC_FIFO_CFG_4, 0x3ffff);
+#if !defined(CONFIG_PB44) && !defined(CONFIG_TALISKER) && !defined(CONFIG_JURA_R) && !defined(CONFIG_MSR2K)
     ag7100_reg_rmw_clear(mac, AG7100_MAC_FIFO_CFG_5, (1 << 19));
 #ifdef AR9100
     ag7100_reg_wr(mac, AG7100_MAC_FIFO_CFG_3, 0x780008);
 #else
     ag7100_reg_wr(mac, AG7100_MAC_FIFO_CFG_3, 0x400fff);
 #endif
+#endif	// talisker
     ag7100_reg_wr(mac, AG7100_MAC_FIFO_CFG_1, 0xfff0000);
     ag7100_reg_wr(mac, AG7100_MAC_FIFO_CFG_2, 0x1fff);
 //printf(": cfg1 %#x cfg2 %#x\n", ag7100_reg_rd(mac, AG7100_MAC_CFG1),
@@ -249,14 +266,18 @@ static void ag7100_hw_start(ag7100_mac_t *mac)
 
 }
 
+#ifdef CFG_ATHRS16_PHY
 static int is_setup_done = 0;
+#endif
 static void ag7100_set_mac_from_link(ag7100_mac_t *mac, int speed, int fdx)
 {
+#if !defined(CONFIG_TALISKER) && !defined(CONFIG_PB44) && !defined(CONFIG_JURA_R) && !defined(CONFIG_MSR2K)
     int is1000 = (speed == _1000BASET);
     int is100 = (speed == _100BASET);
+#endif
 
 #ifdef CFG_ATHRS16_PHY 
-    if(!is_setup_done && (mac->speed != speed || mac->duplex != fdx))
+    if(!is_setup_done && mac->mac_unit == 0 && (mac->speed != speed || mac->duplex != fdx))
     {
        phy_mode_setup();
        is_setup_done = 1;
@@ -266,6 +287,7 @@ static void ag7100_set_mac_from_link(ag7100_mac_t *mac, int speed, int fdx)
     mac->speed = speed;
     mac->duplex = fdx;
 
+#if !defined(CONFIG_TALISKER) && !defined(CONFIG_PB44) && !defined(CONFIG_JURA_R) && !defined(CONFIG_MSR2K)
     ag7100_set_mii_ctrl_speed(mac, speed);
     ag7100_set_mac_if(mac, is1000);
     ag7100_set_mac_duplex(mac, fdx);
@@ -275,7 +297,7 @@ static void ag7100_set_mac_from_link(ag7100_mac_t *mac, int speed, int fdx)
     /*
      * XXX program PLL
      */
-#if defined(CFG_ATHRS16_PHY) || defined(CFG_ATHRF1_PHY)
+#if defined(CFG_ATHRS16_PHY)
     if (is1000)
         ag7100_set_pll(mac, 0x110000);
     else if (is100)
@@ -284,14 +306,88 @@ static void ag7100_set_mac_from_link(ag7100_mac_t *mac, int speed, int fdx)
         ag7100_set_pll(mac, 0x00991099);
 #endif
 
+#else
+
+    // SCA; took this code from Redboot for the PB44 and updated it for u-boot
+    switch (speed) {
+    case _1000BASET:
+	ag7100_set_mii_ctrl_speed(mac, 0x2);
+	break;
+    case _100BASET:
+	ag7100_set_mii_ctrl_speed(mac, 0x1);
+	break;
+    case _10BASET:
+	ag7100_set_mii_ctrl_speed(mac, 0x0);
+	break;
+    }
+    if (fdx == FULL) {
+	ag7100_set_mac_duplex(mac, 1);
+    } else {
+	ag7100_set_mac_duplex(mac, 0);
+    }
+    ag7100_reg_wr(mac, AG7100_MAC_FIFO_CFG_3, 0x7801ff /* Was 0x4001ff */);
+
+    switch (speed) {
+
+    case _1000BASET:
+      ag7100_set_mac_if(mac, 1);
+      ag7100_set_pll(mac, 0x0110000);
+      ag7100_reg_rmw_set(mac, AG7100_MAC_FIFO_CFG_5, (1 << 19));
+      break;
+
+    case _100BASET:
+      ag7100_set_mac_if(mac, 0);
+      ag7100_set_mac_speed(mac, 1);
+      ag7100_set_pll(mac, 0x0001099);  /* was commented out */
+      ag7100_reg_rmw_clear(mac, AG7100_MAC_FIFO_CFG_5, (1 << 19));
+      break;
+
+    case _10BASET:
+      ag7100_set_mac_if(mac, 0);
+      ag7100_set_mac_speed(mac, 0);
+      ag7100_set_pll(mac, 0x00991099);
+      ag7100_reg_rmw_clear(mac, AG7100_MAC_FIFO_CFG_5, (1 << 19));
+      break;
+    }
+#endif
     mac->link = 1;
+}
+
+static char *
+speed_to_str(int speed)
+{
+    switch (speed) {
+    case _1000BASET:
+        return "1 Gb/s";
+    case _100BASET:
+        return "100 Mb/s";
+    case _10BASET:
+        return "10 Mb/s";
+    default:
+        return "unknown";
+    }
+}
+
+static char *
+duplex_to_str(int duplex)
+{
+    switch (duplex) {
+    case FULL:
+        return "full";
+    case HALF:
+        return "half";
+    default:
+        return "unknown";
+    }
 }
 
 static int ag7100_check_link(ag7100_mac_t *mac)
 {
-    u32 link, duplex, speed, fdx, i;
+    u32 link, duplex, speed;
+    u32 olink = mac->link;
 
 #ifdef AR9100
+    u32 fdx, i;
 
 #if !defined(CFG_ATHRS26_PHY) && !defined(CFG_ATHRHDR_EN)
     ag7100_phy_link(mac->mac_unit, link, duplex, speed);
@@ -513,8 +609,6 @@ static void ag7100_halt(struct eth_device *dev)
 unsigned char *
 ag7100_mac_addr_loc(void)
 {
-	extern flash_info_t flash_info[];
-
 #ifdef BOARDCAL
     /*
     ** BOARDCAL environmental variable has the address of the cal sector
@@ -523,6 +617,7 @@ ag7100_mac_addr_loc(void)
     return ((unsigned char *)BOARDCAL);
     
 #else
+	extern flash_info_t flash_info[];
 	/* MAC address is store in the 2nd 4k of last sector */
 	return ((unsigned char *)
 		(KSEG1ADDR(AR7100_SPI_BASE) + (4 * 1024) +
@@ -660,7 +755,10 @@ int ag7100_enet_initialize(bd_t * bis)
         /*
         ** This is the actual reset sequence
         */
-        
+
+        ag7100_reg_rmw_set(ag7100_macs[i], AG7100_MAC_CFG1, AG7100_MAC_CFG1_SOFT_RST);
+        udelay(10000);
+
         mask = i ?(AR7100_RESET_GE1_MAC | AR7100_RESET_GE1_PHY) :
                   (AR7100_RESET_GE0_MAC | AR7100_RESET_GE0_PHY);
 
@@ -690,7 +788,7 @@ int ag7100_enet_initialize(bd_t * bis)
     ar7100_reg_wr_nf(AR7100_CPU_PLL_CONFIG, pll_value);
     udelay(10 * 1000);
 #endif
-    {
+    if (0) {
         unsigned char *mac = dev[i]->enetaddr;
 
         printf("%s: %02x:%02x:%02x:%02x:%02x:%02x\n", dev[i]->name,

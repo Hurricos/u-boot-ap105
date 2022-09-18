@@ -58,6 +58,11 @@ if(!unit) \
 
 #endif // Hydra or Howl
 #endif
+typedef enum {
+    AG7100_PHY_SPEED_10T,
+    AG7100_PHY_SPEED_100TX,
+    AG7100_PHY_SPEED_1000T,
+}ag7100_phy_speed_t;
 
 #ifdef CFG_ATHRS16_PHY
 
@@ -117,6 +122,7 @@ if(!unit) \
 #endif
 
 #ifdef CFG_VSC8601_PHY
+#include "../board/ar7100/common/vsc8601_phy.h"
 
 #define ag7100_phy_setup(unit) do { \
 if(!unit) \
@@ -232,18 +238,6 @@ ag7100_print_link_status(int unit)
 
 #include "../board/ar7100/common/athr_phy.h"
 
-#define ag7100_phy_setup(unit) do { \
-	athr_phy_setup(unit); \
-} while (0);
-
-#define ag7100_phy_duplex(unit,duplex) do { \
-	duplex = athr_phy_is_fdx(unit); \
-} while (0);
-
-#define ag7100_phy_speed(unit,speed) do { \
-	speed = athr_phy_speed(unit); \
-} while (0);
-
 static inline unsigned int 
 ag7100_get_link_status(int unit, int *link, int *fdx, ag7100_phy_speed_t *speed)
 {
@@ -260,5 +254,16 @@ ag7100_get_link_status(int unit, int *link, int *fdx, ag7100_phy_speed_t *speed)
 } while (0);
 
 #endif
+
+#include <miiphy.h>
+
+static inline unsigned int 
+ag7100_get_link_status(int unit, unsigned *link, unsigned *fdx, ag7100_phy_speed_t *speed)
+{
+  *link = miiphy_link("eth0", CFG_PHY_ADDR); \
+  *fdx = miiphy_duplex("eth0", CFG_PHY_ADDR); \
+  *speed = miiphy_speed("eth0", CFG_PHY_ADDR); \
+  return 0;
+}
 
 #endif /*_AG7100_PHY_H*/

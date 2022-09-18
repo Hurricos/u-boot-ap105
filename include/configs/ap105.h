@@ -124,6 +124,7 @@
 
 /* #define CFG_BOARD_AP96 1 */
 #define CFG_BOARD_AP105 1
+#define CONFIG_MSR2K	1
 
 /*
 ** Parameters defining the location of the calibration/initialization
@@ -159,6 +160,10 @@
 #define CONFIG_MEMSIZE_IN_BYTES
 /* #define CONFIG_PCI */
 
+/* #define CONFIG_MII 1 */
+/* #define CONFIG_NET_RETRY_COUNT 5 */
+
+
 
 /*-----------------------------------------------------------------------
  * Cache Configuration
@@ -178,21 +183,21 @@
 #define CFG_FAULT_ECHO_LINK_DOWN    1
 #define CONFIG_PHY_GIGE       		1              /* GbE speed/duplex detect */
 
-#define CFG_ATHRF1_PHY				1
-#define CFG_AG7100_NMACS 			2
+#define CFG_VSC8601_PHY				1
+#define CFG_AG7100_NMACS 			1
 
-#define CFG_PHY_ADDR				0  /* Port 0 */
+#define CFG_PHY_ADDR				1  /* Port 0 */
 #define CFG_GMII 0
-#define CFG_MII0_RGMII 0
+#define CFG_MII0_RGMII 1
 #define CFG_AG7100_GE0_RGMII 1
-#define CFG_AG7100_GE1_RGMII 1
+/* #define CFG_AG7100_GE1_RGMII 1 */
 
 /*
 ** Configure Parser
 */
 
 #define CFG_BOOTM_LEN   (16 << 20) /* 16 MB */
-#define DEBUG 1
+#define DEBUG 10
 #define CFG_HUSH_PARSER
 #define CFG_PROMPT_HUSH_PS2 "hush>"
 

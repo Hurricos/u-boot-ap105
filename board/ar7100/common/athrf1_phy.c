@@ -114,8 +114,10 @@ athr_phy_setup(int unit)
 
     /* delay tx_clk */
     phy_reg_write(unit, phy->phy_addr, 0x1D, 0x5);
-#ifdef CFG_BOARD_AP105
+#if defined(CFG_BOARD_AP105)
     phy_reg_write(unit, phy->phy_addr, 0x1E, 0x100); /* Dumped from Stock Aruba Firmware using mii */
+#elif defined(CFG_BOARD_AP175)
+    phy_reg_write(unit, phy->phy_addr, 0x1E, 0x48); /* Dumped from Stock Aruba Firmware using mii */
 #else
     phy_reg_write(unit, phy->phy_addr, 0x1E, 0x3D47); /* 0x3C47 - no delay, 0x3D47 - 1.5ns delay */
 #endif

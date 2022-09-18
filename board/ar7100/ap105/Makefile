@@ -2,8 +2,12 @@ include $(TOPDIR)/config.mk
 
 LIB	= lib$(BOARD).a
 
-OBJS	= $(BOARD).o ../common/ar7100_flash.o ../common/generic_spi.o \
-	../common/athrf1_phy.o # ../ap94/ap94_pci.o
+
+OBJS	= $(BOARD).o ../common/ar7100_flash.o athrs26_phy.o \
+	../common/generic_spi.o ../common/vsc8601_phy.o
+
+# OBJS	= $(BOARD).o ../common/ar7100_flash.o ../common/generic_spi.o \
+# 	 ../common/vsc8601_phy.o # ../ap94/ap94_pci.o
 SOBJS	= ../ap94/lowlevel_init.o
 
 $(LIB):	.depend $(OBJS) $(SOBJS)

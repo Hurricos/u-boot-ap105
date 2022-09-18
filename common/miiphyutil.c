@@ -36,8 +36,8 @@
 #include <net.h>
 
 /* local debug macro */
-#define MII_DEBUG
-#undef MII_DEBUG
+#define MII_DEBUG 1
+//#undef MII_DEBUG
 
 #undef debug
 #ifdef MII_DEBUG
@@ -175,7 +175,6 @@ int miiphy_read(char *devname, unsigned char addr, unsigned char reg,
 		if (strcmp(devname, dev->name) == 0) {
 			found_dev = 1;
 			read_ret = dev->read(devname, addr, reg, value);
-			*value = read_ret ;
 			break;
 		}
 	}
